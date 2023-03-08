@@ -11,6 +11,7 @@ class player:
         self.lose = 0
         self.nb_game = 0
         self.last_gain = 0
+        self.historic = []
 
     def __str__(self):
         return f"Player {self.index} has a elo of {self.elo} and has {self.win} wins and {self.lose} loses, he has gain {self.last_gain} points"
@@ -19,6 +20,12 @@ class player:
 def print_change_elo(player1: player, player2: player):
     print(
         f"Player {player1.index} was {player1.elo - player1.last_gain} LP and is now {player1.elo} LP ({player1.last_gain}), Player {player2.index} was {player2.elo - player2.last_gain} LP and is now {player2.elo} LP ({player2.last_gain})")
+    return
+
+
+def print_historic(player1: player, player2: player):
+    print(f"Player {player1.index} has a historic of {player1.historic}")
+    print(f"Player {player2.index} has a historic of {player2.historic}")
     return
 
 
@@ -35,16 +42,33 @@ def update_elo(player1: player, player2: player, result: int):
                 k = 80 - (player1.elo - 1000) * 30 / 100
         elif player1.elo > 1300:
             k = 32
+        if len(player2.historic) > 4:
+            if player2.historic[-1] == 'L' and player2.historic[-2] == 'L' and player2.historic[-3] == 'L'\
+                    and player2.historic[-4] == 'L':
+                player2.elo = player2.elo
+                player2.last_gain = 0
+            else:
+                if player2.elo < 800:
+                    player2.elo = 800
+                    player2.last_gain = 0
+                else:
+                    player2.elo = round(player2.elo + k * (scorep2 - e))
+                    player2.last_gain = round(k * (scorep2 - e))
+        else:
+            if player2.elo < 800:
+                player2.elo = 800
+                player2.last_gain = 0
+            else:
+                player2.elo = round(player2.elo + k * (scorep2 - e))
+                player2.last_gain = round(k * (scorep2 - e))
         player1.elo = round(player1.elo + k * (scorep1 - e))
-        player2.elo = round(player2.elo + k * (scorep2 - e))
-        player2.last_gain = round(k * (scorep2 - e))
-        if player2.elo < 800:
-            player2.elo = 800
-            player2.last_gain = 0
         player1.last_gain = round(k * (scorep1 - e))
         player1.win = player1.win + 1
         player2.lose = player2.lose + 1
+        player1.historic.append('W')
+        player2.historic.append('L')
         print_change_elo(player1, player2)
+        print_historic(player1, player2)
         return
     elif result == 2:
         k = 50
@@ -57,16 +81,33 @@ def update_elo(player1: player, player2: player, result: int):
                 k = 80 - (player2.elo - 1000) * 30 / 100
         elif player2.elo > 1300:
             k = 32
-        player1.elo = round(player1.elo + k * (scorep1 - e))
-        player2.elo = round(player2.elo + k * (scorep2 - e))
-        player1.last_gain = round(k * (scorep1 - e))
-        if player1.elo < 800:
-            player1.elo = 800
-            player1.last_gain = 0
-        player2.last_gain = round(k * (scorep2 - e))
-        player1.lose = player1.lose + 1
+        if len(player1.historic) > 4:
+            if player1.historic[-1] == 'L' and player1.historic[-2] == 'L' and player1.historic[-3] == 'L' \
+                    and player1.historic[-4] == 'L':
+                player1.elo = player1.elo
+                player1.last_gain = 0
+            else:
+                if player1.elo < 800:
+                    player1.elo = 800
+                    player1.last_gain = 0
+                else:
+                    player1.elo = round(player1.elo + k * (scorep2 - e))
+                    player1.last_gain = round(k * (scorep2 - e))
+        else:
+            if player1.elo < 800:
+                player1.elo = 800
+                player1.last_gain = 0
+            else:
+                player1.elo = round(player1.elo + k * (scorep2 - e))
+                player1.last_gain = round(k * (scorep2 - e))
+        player2.elo = round(player2.elo + k * (scorep1 - e))
+        player2.last_gain = round(k * (scorep1 - e))
         player2.win = player2.win + 1
+        player1.lose = player1.lose + 1
+        player2.historic.append('W')
+        player1.historic.append('L')
         print_change_elo(player1, player2)
+        print_historic(player1, player2)
         return
 
 
@@ -113,4 +154,6 @@ if __name__ == '__main__':
     nb_player = int(input("How many players do you want ?"))
     for i in range(0, nb_player):
         player_list.append(create_player(i))
-    matchmaking(player_list)
+    nb_game = int(input("How many games do you want ?"))
+    for i in range(0, nb_game):
+        battle(player_list[random.randint(0, nb_player - 1)], player_list[random.randint(0, nb_player - 1)])
